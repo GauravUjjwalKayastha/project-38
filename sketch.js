@@ -1,8 +1,9 @@
 var ninImg,ninStarImg,bg,stoneImg;
-var varH=100;
+var varH=200;
 var gameState="start";
 var score=0;
 var obstaclesGroup,kGroup;//obstacle,kudai;
+var obsNin = 1
 
 
 
@@ -10,6 +11,7 @@ var obstaclesGroup,kGroup;//obstacle,kudai;
 
 function preload(){
   ninImg = loadAnimation("Run__000.png","Run__001.png","Run__002.png");
+  ninIdle = loadAnimation("Idle__000.png","Idle__000.png");
   ninD=loadAnimation("Dead__007.png");
   ninStarImg=loadImage("Kunai.png");
   bg=loadImage("bambooBG.png");
@@ -20,7 +22,7 @@ function preload(){
 
 
 function setup() {
-  createCanvas(displayWidth, displayHeight-300);
+  createCanvas(displayWidth, displayHeight-200);
   
   
  
@@ -28,23 +30,65 @@ function setup() {
   ground.scale=2.2;
   ground.x = ground.width /2+200;*/
   
-  ninja=createSprite(100,varH,100,100);
+  ninja=createSprite(displayWidth/2,varH,100,100);
   ninja.addAnimation("ninjastic",ninImg);
   ninja.addAnimation("ninjaDead",ninD);
+  ninja.addAnimation("idling",ninIdle);
   ninja.scale=0.2;
   
   
   kGroup = createGroup();
   obstaclesGroup = createGroup();
   musicA.loop();
+
+  textScore=createElement('h2');
+  textScore.style('color',"white");
+  textScore.style('font',"times");
+  textScore.position(displayWidth-200,50);
+
+  title=createElement('h1',"Ninja Rush");
+  title.style('color','red');
+  title.position(displayWidth/2-50,50);
+
+  infor=createElement('h2');
+  infor.style('color','blue');
+  infor.position(500,150);
+  infor2=createElement('h2');
+  infor2.style('color','blue');
+  infor2.position(500,200);
+  infor3=createElement('h2');
+  infor3.style('color','blue');
+  infor3.position(600,400);
+  lastText=createElement('h1');
+  lastText.style('color','yellow');
+  lastText.position(displayWidth/2-50,300)
   
 }
 
 function draw() {
   background(220);
-  image(bg,0,0,displayWidth*5,displayHeight);
+  image(bg,0,(-height/2)-20,displayWidth*8,height*2+40);
+ // writeIt(1);
+
+ 
+    textScore.html("Score: "+score);
+
+    stroke("red");
+    strokeWeight(8)
+    line((displayWidth*8)-displayWidth/2-30,-displayWidth,(displayWidth*8)-displayWidth/2-30,displayHeight*2);
+
+
   if(gameState==="start"){
     ninja.visible=false;
+
+    lastText.hide();
+    title.show();
+    infor.html("Help ninja clear this obstacle coarse");
+    infor.show();
+    infor2.html("Use arrow keys for control");
+    infor2.show();
+    infor3.html("Press space to start");
+    infor3.show();
     
     if(keyDown("space")){
       gameState="play";
@@ -52,26 +96,38 @@ function draw() {
   }
   
   camera.position.x=ninja.x;
+  camera.position.y=ninja.y;
   
   if(gameState==="play"){
     ninja.visible=true;
-     ninja.changeAnimation("ninjastic",ninImg);
-    
-    //ground.velocityX = -(6 + score/3);
-    /*if (ground.x < 140){
-      ground.x = ground.width/2;
-    }*/
-    
-    
+     ninja.changeAnimation("idling",ninIdle);
+
+     title.hide();
+     infor.hide();
+     infor2.hide();
+     infor3.hide();
+     lastText.hide();
+     
     if(keyDown("up")&&varH>0){
-      varH=varH-15;
+      varH=varH-20;
     }
     
     if(keyDown("down")&&varH<height){
-      varH=varH+15;
+      varH=varH+20;
   }
   if(keyDown("right")){
-    ninja.x+=15;
+    ninja.x+=30;
+    obsNin=0
+  }
+  else{
+    obsNin=1
+  }
+
+  if(obsNin!==1){
+    ninja.changeAnimation("ninjastic",ninImg)
+  }
+  else{
+    ninja.changeAnimation("idling",ninIdle);
   }
     ninja.y=varH;
     
@@ -91,18 +147,35 @@ function draw() {
     kGroup.destroyEach();
       //score+=1;
     }
+    if(ninja.x>(displayWidth*8)-displayWidth/2-30){
+      gameState="win";
+    }
     
   }
   
   if(gameState==="end"){
     ninja.changeAnimation("ninjaDead",ninD);
-    ground.velocityX=0;
+
+    lastText.html("You lost");
+    lastText.show();
+    infor3.html("Press space to retry");
+    infor3.show();
+
+    if(keyDown("space")){
+      score=0;
+      reset();
+      gameState="play";
+    }
     
-    obstaclesGroup.setLifetimeEach(-1);
-    kGroup.setLifetimeEach(-1);
-     
-     obstaclesGroup.setVelocityXEach(0);
-     kGroup.setVelocityXEach(0);  
+  }
+
+  if(gameState==="win"){
+    ninja.changeAnimation("idling",ninIdle);
+
+    lastText.html("You Won!");
+    lastText.show();
+    infor3.html("Press space to replay");
+    infor3.show();
      
     if(keyDown("space")){
       score=0;
@@ -113,11 +186,10 @@ function draw() {
   }
   
   
-  
   drawSprites();
   
   
-  
+ /* 
   textSize(30)
   fill("white");
   text("Score: "+score,displayWidth-400,100)
@@ -147,14 +219,14 @@ function draw() {
      fill("blue");
      textSize(20);
     text("Press space to retry",displayWidth/2-150,300)
-   }
+   }*/
   
   
 }
 
 function spawnObstacles(){
- if (frameCount % 10 === 0){
-   var obstacle = createSprite(random(100,displayWidth*5),random(0,height),10,40);
+ if (frameCount % 5 === 0&&obsNin===0){
+   var obstacle = createSprite(ninja.x+displayWidth/2,random(0,height),10,40);
   // obstacle.velocityX = -(6 + score/3);
    obstacle.addImage("stones",stoneImg)
    obstacle.scale=0.2;
@@ -166,8 +238,8 @@ function spawnObstacles(){
 }
 function spawnKudai(){
   var num=random(0,height);
- if (frameCount % 150 === 0){
-   var kudai = createSprite(width,num,10,40);
+ if (frameCount % 20 === 0&&obsNin===0){
+   var kudai = createSprite(ninja.x+displayWidth/2,num,10,40);
   // kudai.velocityX = -(6 + score/3);
    kudai.addImage("stars",ninStarImg)
    kudai.scale=0.4;
@@ -179,4 +251,6 @@ function reset()
 {
   obstaclesGroup.destroyEach();
   kGroup.destroyEach();
+  ninja.x=displayWidth/2;
+  ninja.y=height/2;
 }
