@@ -243,7 +243,7 @@ function spawnKudai(){
   // kudai.velocityX = -(6 + score/3);
    kudai.addImage("stars",ninStarImg)
    kudai.scale=0.4;
-   kudai.lifetime = 220;
+   //kudai.lifetime = 220;
   kGroup.add(kudai);
  }
 }
